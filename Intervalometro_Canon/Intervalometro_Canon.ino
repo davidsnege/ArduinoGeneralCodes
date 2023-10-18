@@ -34,14 +34,11 @@ Ej:
 La idea es mejorar esto y hacer una integración con una montaje Barn Door que tenemos, movimentando un
 motor de paso para acompañar el movimiento del cielo y hacer astrofotografias.
 */
-
-
 ////////////////////////////////////////////////////////
-
-
-
 //////////////////////////////////////////////////////// INCLUDE LIBS
 
+#include <Servo.h>
+Servo myservo;
 #include "LiquidCrystal_I2C.h"                        // LCD LIBRERIA
 LiquidCrystal_I2C lcd(0x27, 16, 2);                   // Instancia de Libreria y puerto + 16 columnas / 2 Lineas
 
@@ -55,6 +52,8 @@ float obturador = 0;                                    // Tiempo de Obturador A
 int   obturadorDelay = 0;                               // Delay real en Milisegundos que Arduino debe esperar
 int   fotosTomadas = 0;                                 // Cantidad de fotos que se ha tomado hasta el momento
 int   startStop = 0;                                    // activa desactiva en el menu 1 todo
+int   pos = 0;                                          // Posicion del servo inicial
+int   cliclosServo = 1;                                 // Cantidad de ciclos del servo entre fotos, cambia los grados de giro
 
 //////////////////////////////////////////////////////// START SETUP
 void setup() {
@@ -65,6 +64,7 @@ if (!i2CAddrTest(0x27)) {                               // Testeo de la puerta I
 lcd = LiquidCrystal_I2C(0x3F, 16, 2);
 }
 
+myservo.attach(2);
 pinMode(A0, INPUT_PULLUP);                              // Button de Menu
 pinMode(A1, INPUT_PULLUP);                              // Button de decremento / Stop 
 pinMode(A2, INPUT_PULLUP);                              // Button de incremento / Start
@@ -76,7 +76,7 @@ lcd.init();                                             // Iniciamos el LCD -- S
 lcd.backlight();                                        // Encendemos la luz de background del LCD 0/1 si no hay nada es 1
 
 digitalWrite(7, LOW);                                   // Primer estado del LED de Buffer
-digitalWrite(6, HIGH);                                  // Primer estado del disparador (Funciona al reves en la camara [ HIGH = Apagado / LOW = Disparando ])
+digitalWrite(6, 10);                                  // Primer estado del disparador (Funciona al reves en la camara [ HIGH = Apagado / LOW = Disparando ])
 
 // Escribimos por primera vez 
 // LCD después del Setup
@@ -84,6 +84,8 @@ lcd.setCursor(0, 0);                                    // Posicionamos cursor
 lcd.print("Intervalometer  ");                          // Escribimos
 delay(500);                                             // La camara va sacar una foto inicial, borrar después
 lcd.clear();                                            // Limpiamos el LCD
+
+myservo.write(pos);
 
 }
 //////////////////////////////////////////////////////// END SETUP
@@ -94,37 +96,42 @@ void loop() {
 // Nuestro Switch se encarga de saber en que menu estamos por el
 // estado del posMenu en este momento.
  
-  switch (posMenu) {
-  case 0:
-      StartStop();
-    break;
-  case 1:
-      ConfigObturador();
-    break;
-  case 2:
-      ConfigFotos();
-    break;
-  case 3:
-      BufferDelay();
-    break;    
-  case 4:
-      ResetParams();
-    break;  
-  default:
-    // statements
-    break;
+  if (posMenu == 0){
+    lcd.setCursor(0, 1); 
+    lcd.print("                "); 
+    StartStop();   
+  }else if (posMenu == 1){
+    lcd.setCursor(0, 1); 
+    lcd.print("                "); 
+    ConfigObturador();
+  }else if (posMenu == 2){
+    lcd.setCursor(0, 1); 
+    lcd.print("                "); 
+    ConfigFotos();
+  }else if (posMenu == 4){
+    lcd.setCursor(0, 1); 
+    lcd.print("                ");     
+    BufferDelay();
+  }else if (posMenu == 5){
+    lcd.setCursor(0, 1); 
+    lcd.print("                ");     
+    ResetParams();
+  }else{
+    //
   }
 
-  delay(1000);                                          // Esperamos que se use los buttons
+  delay(500);                                 // Esperamos que se use los buttons
 
 // Ponemos valor en el estado del button para el menu rotatorio de incremento    
   if (digitalRead(A0) == LOW) {
     posMenu += 1;
   }
-  if (posMenu == 5) {
+  if (posMenu == 6) {
     posMenu = 0;
   }
+////////////////////////
 
+////////////////////////
 }
 //////////////////////////////////////////////////////// END LOOP
 
@@ -132,22 +139,30 @@ void loop() {
 ////////////////////////////////////////////////////////
 void StartStop(){
 ////////////////////////
-  lcd.setCursor(0, 0); 
-  lcd.print("Arduinter Home      "); 
-
+  //lcd.setCursor(0, 0); 
+  //lcd.print(" Start or Stop   "); 
 ////////////////////////  
   if (digitalRead(A2) == LOW) {
     startStop = 1;
     TakeFotos();
-    lcd.setCursor(6, 0); 
-    lcd.print("Arduinter   Take");  
   }
 ////////////////////////  
   if (digitalRead(A1) == LOW) {
     startStop = 0;
     lcd.setCursor(6, 0); 
-    lcd.print("Arduinter   Stop");    
+    lcd.print("Arduinter   Stop"); 
   }
+////////////////////////  
+  if (startStop == 1) {
+    lcd.setCursor(0, 0); 
+    lcd.print("-- Ejecutando ---"); 
+  }else{
+    lcd.setCursor(0, 0); 
+    lcd.print("---- Parado -----");     
+  }
+
+  
+  Serial.println(startStop);
 }
 ////////////////////////////////////////////////////////
 
@@ -202,6 +217,29 @@ void ConfigFotos(){
 ////////////////////////////////////////////////////////
 
 
+////////////////////////////////////////////////////////
+void ConfigServoCiclos(){
+////////////////////////
+  lcd.setCursor(0, 0); 
+  lcd.print("Ciclos Servo   F"); 
+////////////////////////  
+  if (digitalRead(A2) == LOW) {
+    cliclosServo += 1;
+  }
+////////////////////////  
+  if (digitalRead(A1) == LOW) {
+    cliclosServo -= 1;
+  }
+
+  lcd.setCursor(6, 1); 
+  lcd.print("C/F");             
+  lcd.setCursor(9, 1); 
+  lcd.print(cliclosServo);  
+////////////////////////
+}
+
+////////////////////////////////////////////////////////
+
 
 ////////////////////////////////////////////////////////
 void TakeFotos(){
@@ -210,15 +248,16 @@ void TakeFotos(){
   //Hasta que se cumpla
   if (fotosTomadas != fotosTotal){
     while(fotosTomadas < fotosTotal){
+      startStop = 1;
       digitalWrite(6, LOW); // Abre BULB foto
       lcd.setCursor(0, 0);
       lcd.print("Sacando Fotos   "); 
       delay(obturadorDelay);
-      digitalWrite(6, HIGH); // Cierra BULB foto
+      digitalWrite(6, 100); // Cierra BULB foto
 
       lcd.setCursor(0, 0);
       lcd.print("Guardando Fotos "); 
-      digitalWrite(7, HIGH);        
+      digitalWrite(7, 100);        
       delay(delayBuffer);
       digitalWrite(7, LOW);
       
@@ -227,11 +266,31 @@ void TakeFotos(){
         lcd.setCursor(10, 1); 
         lcd.print("T");         
         lcd.setCursor(11, 1); 
-        lcd.print(fotosTomadas);  
+        lcd.print(fotosTomadas);
+
+        lcd.setCursor(6, 1); 
+        lcd.print("F");             
+        lcd.setCursor(7, 1); 
+        lcd.print(fotosTotal);
+        
+        // Servo Movement
+        //for (int i = 0; i < cliclosServo; i++){
+        //    for (pos = 0; pos <= 25; pos += 1) {
+        //      myservo.write(pos);
+        //      Serial.println(pos);              
+        //      delay(15);                     
+        //    }
+        //    for (pos = 25; pos >= 0; pos -= 1) { 
+        //      myservo.write(pos);
+        //      Serial.println(pos);              
+        //      delay(15);                      
+        //    }
+        //}
+         
     }
       if(fotosTomadas == fotosTotal){ // Paramos todo y volvemos valores a cero
         startStop = 0;
-        digitalWrite(6, HIGH);
+        digitalWrite(6, 100);
         digitalWrite(7, LOW);
         
         lcd.setCursor(0, 0);
@@ -251,9 +310,8 @@ void TakeFotos(){
         lcd.print("T");         
         lcd.setCursor(11, 1); 
         lcd.print(fotosTomadas);                        
-      }
-  }
-     
+     }      
+  }   
 //////////////////////// 
 }
 ////////////////////////////////////////////////////////
