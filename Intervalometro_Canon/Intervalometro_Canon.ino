@@ -42,7 +42,16 @@ REPOSITORIO:
 LICENCIA:
 
   El uso es libre con excepción de usos comerciales, esto debe ser compartido de manera gratuita y nadie debe llevar
-  lucro o ganancias con uso de este código.  
+  lucro o ganancias con uso de este código.
+
+COMPONENTES USADOS:
+
+  - Arduino Nano (generico de Amazon)
+  - 2 Leds (Rojo, Amarillo)
+  - 2 Resistencias de 10k
+  - 3 Push Buttons
+  - LCD 16x2 (Interfaz I2C 'El que tiene solo 4 conectores')
+    
 */
 
 // +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -111,24 +120,24 @@ void loop() {
   // +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
   // Nuestro If se encarga de saber en que menu estamos por el estado del posMenu en este momento.
   if (posMenu == 0){
-    lcd.setCursor(0, 1);            // Ponemos el Cursor a segunda linea
-    lcd.print("                ");  // Limpiamos la información anterior
+    lcd.setCursor(0, 1);            
+    lcd.print("                ");  
     StartStop();                    // Llamamos la función de Start o Stop que inicia las tomas de fotos si es verdadero
   }else if (posMenu == 1){
-    lcd.setCursor(0, 1);            // Ponemos el Cursor a segunda linea
-    lcd.print("                ");  // Limpiamos la información anterior
+    lcd.setCursor(0, 1);            
+    lcd.print("                ");  
     ConfigObturador();              // Llamamos la funcion de configuración de tiempo del obturador abierto
   }else if (posMenu == 2){
-    lcd.setCursor(0, 1);            // Ponemos el Cursor a segunda linea
-    lcd.print("                ");  // Limpiamos la información anterior
+    lcd.setCursor(0, 1);            
+    lcd.print("                ");  
     ConfigFotos();                  // Llamamos la funcion de configuración de cantida de fotos a sacar por sessión
   }else if (posMenu == 4){
-    lcd.setCursor(0, 1);            // Ponemos el Cursor a segunda linea
-    lcd.print("                ");  // Limpiamos la información anterior   
+    lcd.setCursor(0, 1);            
+    lcd.print("                ");     
     BufferDelay();                  // Llamamos la funcion de configuración de Buffer de guardado de la camara
   }else if (posMenu == 5){
-    lcd.setCursor(0, 1);            // Ponemos el Cursor a segunda linea
-    lcd.print("                ");  // Limpiamos la información anterior   
+    lcd.setCursor(0, 1);            
+    lcd.print("                ");     
     ResetParams();                  // Llamamos la funcion de limpieza de variables de parametros de las otras funciones lo que resulta en un reset
   }else{
     //                              // Nos prevenimos que no debe hacer nada si viene otro valor de posMenu
@@ -161,17 +170,17 @@ void StartStop(){
   // Verificamos el estado del button A1 para saber si cambiamos startStop a cero (falso) y si es true paramos las tomas de fotos    
   if (digitalRead(A1) == LOW) {    // Si el button A1 es presionado
     startStop = 0;                 // Cambiamos el estado de startStop a cero para que sea verdadero
-    lcd.setCursor(6, 0);           // Posicionamos el cursor en la posición 6 de la linea 1 (0)
-    lcd.print("Arduinter   Stop"); // Imprimimos que estamos parando
+    lcd.setCursor(6, 0);            
+    lcd.print("Arduinter   Stop"); 
   }
   // +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
   // Si startStop es verdadero (true/1) entonces informamos en la pantalla mientras se esta ejecutando, cuando termine volve a parado    
   if (startStop == 1) {
-    lcd.setCursor(0, 0);           // Posicionamos el cursor en la posición 1 (0) de la linea 1 (0)
-    lcd.print("-- Ejecutando ---");// Imprimimos que estamos en ejecución 
+    lcd.setCursor(0, 0);           
+    lcd.print("-- Ejecutando ---");
   }else{
-    lcd.setCursor(0, 0);           // Posicionamos el cursor en la posición 1 (0) de la linea 1 (0)
-    lcd.print("---- Parado -----");// Imprimimos que estamos parados     
+    lcd.setCursor(0, 0);           
+    lcd.print("---- Parado -----");     
   }
 }
 //////////////////////////////////////////////////////// END START o STOP
@@ -179,114 +188,132 @@ void StartStop(){
 ////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////// START CONFIG OBTURADOR
 void ConfigObturador(){
-////////////////////////
-  lcd.setCursor(0, 0); 
+  // +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+  // Aqui empezamos imprimiendo en la pantalla en que Menu estamos    
+  lcd.setCursor(0, 0);            
   lcd.print("Obturador Timer "); 
-////////////////////////  
-  if (digitalRead(A2) == LOW) {
-    obturador += 0.25;
+  // +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+  // Si presionamos el button A2 incrementamos la cantidad de segundos del obturador en decimales de 0.25 por vez 
+  if (digitalRead(A2) == LOW) {  // Si el button A2 es presionado
+    obturador += 0.25;           // Incrementamos 0.25 al tiempo de obturador abierto
   }
-////////////////////////  
-  if (digitalRead(A1) == LOW) {
-    obturador -= 0.25;
+  // +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+  // Si presionamos el button A1 decrementamos la cantidad de segundos del obturador en decimales de 0.25 por vez  
+  if (digitalRead(A1) == LOW) { // Si el button A1 es presionado
+    obturador -= 0.25;          // Decrementamos 0.25 al tiempo de obturador abierto
   }
+  // +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+  // Aqui hacemos las matematicas para que Arduino sepa en milisegundos el tiempo que acabamos de definir 
   obturadorDelay = obturador * 1000 + 1000;
-
-  lcd.setCursor(0, 1); 
-  lcd.print("T");          
-  lcd.setCursor(1, 1); 
-  lcd.print(obturador); 
-//////////////////////// 
+  // +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+  // Imprimimos en la pantalla mientras vamos cambiando la configuración
+  lcd.setCursor(0, 1);          
+  lcd.print("T");              
+  lcd.setCursor(1, 1);         
+  lcd.print(obturador);        
 }
 //////////////////////////////////////////////////////// END CONFIG OBTURADOR
 ////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////// START CONFIG FOTOS
 void ConfigFotos(){
-////////////////////////
-  lcd.setCursor(0, 0); 
+  // +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+  // Aqui empezamos imprimiendo en la pantalla en que Menu estamos    
+  lcd.setCursor(0, 0);          
   lcd.print("Fotos Cuantidad "); 
-////////////////////////  
-  if (digitalRead(A2) == LOW) {
-    fotosTotal += 1;
+  // +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+  // Si presionamos el button A2 incrementamos la cantidad de fotos que vamos tomar por sesion.  
+  if (digitalRead(A2) == LOW) { // Si el button A2 es presionado
+    fotosTotal += 1;            // Incrementamos la cantidad de fotos a tomar de uno en uno
   }
-////////////////////////  
-  if (digitalRead(A1) == LOW) {
-    fotosTotal -= 1;
+  // +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+  // Si presionamos el button A1 decrementamos la cantidad de fotos que vamos tomar por sesion.  
+  if (digitalRead(A1) == LOW) { // Si el button A1 es presionado
+    fotosTotal -= 1;            // Decrementamos la cantidad de fotos a tomar de uno en uno
   }
-
-  lcd.setCursor(6, 1); 
-  lcd.print("F");             
-  lcd.setCursor(7, 1); 
-  lcd.print(fotosTotal);  
-//////////////////////// 
+  // +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+  // Imprimimos en la pantalla mientras vamos cambiando la configuración
+  lcd.setCursor(6, 1);          
+  lcd.print("F");              
+  lcd.setCursor(7, 1);          
+  lcd.print(fotosTotal);       
 }
 //////////////////////////////////////////////////////// END CONFIG FOTOS
 ////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////// START CONFIG BUFFER
 void BufferDelay(){
-////////////////////////
-  lcd.setCursor(0, 0); 
+  // +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+  // Aqui empezamos imprimiendo en la pantalla en que Menu estamos  
+  lcd.setCursor(0, 0);          
   lcd.print("Buffer Delay    "); 
-////////////////////////  
-  if (digitalRead(A2) == LOW) {
-    numBuffer += 1;
+  // +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+  // Si presionamos el button A2 incrementamos el tiempo del buffer, o sea cuanto la camara tarda en guardar la foto, antes de sacar otra.
+  if (digitalRead(A2) == LOW) { // Si el button A2 es presionado
+    numBuffer += 1;             // Incrementamos el buffer de uno segundo en uno segundo
   }
-////////////////////////  
-  if (digitalRead(A1) == LOW) {
-    numBuffer -= 1;
+  // +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+  // Si presionamos el button A1 decrementamos el tiempo del buffer, o sea cuanto la camara tarda en guardar la foto, antes de sacar otra. 
+  if (digitalRead(A1) == LOW) { // Si el button A1 es presionado
+    numBuffer -= 1;             // Decrementamos el buffer de uno segundo en uno segundo
   }
-
+  // +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+  // Aqui hacemos las matematicas para que Arduino sepa en milisegundos el tiempo que acabamos de definir 
   delayBuffer = numBuffer * 1000 + 1000;
-
-  lcd.setCursor(14, 1); 
-  lcd.print("B"); 
-  lcd.setCursor(15, 1); 
-  lcd.print(numBuffer);  
-//////////////////////// 
+  // +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+  // Imprimimos en la pantalla mientras vamos cambiando la configuración
+  lcd.setCursor(14, 1);        
+  lcd.print("B");              
+  lcd.setCursor(15, 1);        
+  lcd.print(numBuffer);        
 }
 //////////////////////////////////////////////////////// END CONFIG BUFFER
 ////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////// START TAKE FOTOS
 void TakeFotos(){
-////////////////////////
-  //Tomamos fotos con los parametros 
-  //Hasta que se cumpla
+  // +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+  // Esta es la funcción que se ejecuta desde "StartStop()" para hacer las fotos con los parametros configurados en las otras funciones
+  // +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+  // Verificamos que las fotos que ya tomamos son diferentes de las fotos que configuramos para tomar, si son diferentes es true
   if (fotosTomadas != fotosTotal){
+  // +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+  // Creamos un bucle, mientras las fotos que configuramos sean más que las tomadas sacamos fotos    
     while(fotosTomadas < fotosTotal){
-      startStop = 1;
-      digitalWrite(6, LOW); // Abre BULB foto
-      lcd.setCursor(0, 0);
-      lcd.print("Sacando Fotos   "); 
-      delay(obturadorDelay);
-      digitalWrite(6, 100); // Cierra BULB foto
-
-      lcd.setCursor(0, 0);
-      lcd.print("Guardando Fotos "); 
-      digitalWrite(7, 100);        
-      delay(delayBuffer);
-      digitalWrite(7, LOW);
-      
-      fotosTomadas++;
-    
-        lcd.setCursor(10, 1); 
-        lcd.print("T");         
-        lcd.setCursor(11, 1); 
-        lcd.print(fotosTomadas);
-
-        lcd.setCursor(6, 1); 
-        lcd.print("F");             
-        lcd.setCursor(7, 1); 
-        lcd.print(fotosTotal);
-                
+      digitalWrite(6, LOW); // Abre BULB foto       // Ponemos en true (encendido) el pin 6 (donde esta el cable disparador y el led amarillo) (LOW y HIGH estan invertidos OK)
+      lcd.setCursor(0, 0);                          
+      lcd.print("Sacando Fotos   ");                
+      delay(obturadorDelay);                        // Esperamos el tiempo que configuramos en la función del obturador
+      digitalWrite(6, HIGH); // Cierra BULB foto    // Ponemos en false (apagado) el pin 6 (donde esta el cable disparador y el led amarillo) para que deje el obturador cerrar (LOW y HIGH estan invertidos OK)
+  // +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+  // Atualizando la pantalla con el status actual de la toma y el led de control rojo 
+      lcd.setCursor(0, 0);                          
+      lcd.print("Guardando Fotos ");                
+      digitalWrite(7, HIGH);                        
+      delay(delayBuffer);                           // Esperamos el tiempo configurado en el Buffer para que la camara tenga tiempo de guardar la foto antes que intentemos sacar otra
+      digitalWrite(7, LOW);                         
+  // +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+  // Atualizando el contador de fotos tomadas      
+      fotosTomadas++;                               // Incrementamos el contador de fotos ya tomadas
+  // +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+  // Atualizando la pantalla con el status actual despues de la ultima toma    
+      lcd.setCursor(6, 1);                          
+      lcd.print("F");                               
+      lcd.setCursor(7, 1);                          
+      lcd.print(fotosTotal);                        
+      lcd.setCursor(10, 1);                         
+      lcd.print("T");                               
+      lcd.setCursor(11, 1);                         
+      lcd.print(fotosTomadas);                                      
     }
-      if(fotosTomadas == fotosTotal){ // Paramos todo y volvemos valores a cero
-        startStop = 0;
-        digitalWrite(6, 100);
-        digitalWrite(7, LOW);
-        
+  // +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+  // Este bucle es responsable por parar de tomar fotos, volver el estado de startStop y printar las infos en la pantalla
+      if(fotosTomadas == fotosTotal){               // Si ya tomamos todas las fotos, paramos todo y volvemos valores a cero
+        startStop = 0;                              // Eso hace que el menu de Start Stop vuelva a cero
+        digitalWrite(6, HIGH);                      // Dejamos el Obturador Cerrado (pero el led encendido, porque los LOW y HIGH estan invertidos)
+        digitalWrite(7, LOW);                       // Apagamos el led rojo para saber que no estamos ejecutando nada  
+  // +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+  // Actualizamos todas las infos de la pantalla       
         lcd.setCursor(0, 0);
         lcd.print("Arduinter   Stop"); 
         
@@ -305,27 +332,31 @@ void TakeFotos(){
         lcd.setCursor(11, 1); 
         lcd.print(fotosTomadas);                        
      }      
-  }   
-//////////////////////// 
+  }
 }
 //////////////////////////////////////////////////////// END TAKE FOTOS
 ////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////// START RESET PARAMETROS
 void ResetParams(){
-  ////////////////////////
+  // +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+  // Esta es la funcción que borra todos los datos configurados (solo mantenemos el buffer por seguridad)
   lcd.setCursor(0, 0); 
   lcd.print("Borrar   Config?"); 
-  ////////////////////////  
+  // +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+  // Verificamos si el button de reset A2 es presionado
   if (digitalRead(A2) == LOW) {
     lcd.setCursor(0, 0); 
     lcd.print("Borrando Config!"); 
     delay(2000);
-    startStop = 0;
-    fotosTomadas = 0;
-    fotosTotal = 0;
-    obturador = 0; 
-
+  // +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+  // Borrando configuraciones    
+    startStop = 0;                                  // Vaciamos startStop
+    fotosTomadas = 0;                               // Vaciamos fotosTomadas
+    fotosTotal = 0;                                 // Vaciamos fotosTotal
+    obturador = 0;                                  // Vaciamos obturador
+  // +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+  // Actualizando pantalla
         lcd.setCursor(0, 1); 
         lcd.print("T");          
         lcd.setCursor(1, 1); 
@@ -345,13 +376,13 @@ void ResetParams(){
         lcd.print("B"); 
         lcd.setCursor(15, 1); 
         lcd.print(numBuffer); 
-
+  // +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+  // Esperamos 1 segundo   
     delay(1000);
-
-        posMenu = 0;
-    
+  // +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+  // Volvemos al menu inicial    
+        posMenu = 0;   
   }
-
 }
 //////////////////////////////////////////////////////// END RESET PARAMETROS
 ////////////////////////////////////////////////////////
